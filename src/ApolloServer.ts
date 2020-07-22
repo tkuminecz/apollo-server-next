@@ -95,8 +95,13 @@ const createFileUploadMiddleware = (
   return undefined;
 };
 
+export interface NextContext {
+  req: NextApiRequest;
+  res: NextApiResponse;
+}
+
 export interface ApolloServerNextConfig extends Config {
-  context?: ContextFunction<unknown, Context> | Context;
+  context?: ContextFunction<NextContext, Context> | Context;
 }
 
 export class ApolloServer extends ApolloServerBase {
