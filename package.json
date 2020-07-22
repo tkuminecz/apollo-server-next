@@ -1,5 +1,5 @@
 {
-  "name": "apollo-server-next",
+  "name": "@tkuminecz/apollo-server-next",
   "version": "0.1.0",
   "description": "Apollo server implementation for Next.js",
   "repository": "git@github.com:tkuminecz/apollo-server-next.git",
