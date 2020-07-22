@@ -19,6 +19,7 @@ import {
 import accepts from 'accepts';
 import typeis from 'type-is';
 import { NextApiHandler, NextApiResponse, NextApiRequest } from 'next';
+import { ExecutionParams } from 'graphql-tools';
 import { graphqlNext } from './nextApollo';
 
 export type { GraphQLOptions, GraphQLExtension } from 'apollo-server-core';
@@ -98,6 +99,7 @@ const createFileUploadMiddleware = (
 export interface NextContext {
   req: NextApiRequest;
   res: NextApiResponse;
+  connection?: ExecutionParams;
 }
 
 export interface ApolloServerNextConfig extends Config {
