@@ -1,3 +1,3 @@
-import { graphqlNext } from './nextApollo';
+import { graphqlNext } from './nextApollo'
 
-export const graphqlConnect = graphqlNext;
+export const graphqlConnect = graphqlNext

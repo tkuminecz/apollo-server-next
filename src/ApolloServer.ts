@@ -1,34 +1,33 @@
-import corsMiddleware from 'cors';
-import { OptionsJson } from 'body-parser';
-import {
-  renderPlaygroundPage,
-  RenderPageOptions as PlaygroundRenderPageOptions,
-} from '@apollographql/graphql-playground-html';
+import corsMiddleware from 'cors'
+import { OptionsJson } from 'body-parser'
+// import {
+//   renderPlaygroundPage,
+//   RenderPageOptions as PlaygroundRenderPageOptions,
+// } from '@apollographql/graphql-playground-html'
 import {
   GraphQLOptions,
-  FileUploadOptions,
   ApolloServerBase,
-  formatApolloErrors,
-  processFileUploads,
+  // formatApolloErrors,
   ContextFunction,
   Context,
   Config,
   ApolloError,
-} from 'apollo-server-core';
+} from 'apollo-server-core'
 // import { ExecutionParams } from 'subscriptions-transport-ws';
-import accepts from 'accepts';
-import typeis from 'type-is';
-import { NextApiHandler, NextApiResponse, NextApiRequest } from 'next';
-import { ExecutionParams } from 'graphql-tools';
-import { graphqlNext } from './nextApollo';
+// import accepts from 'accepts'
+// import typeis from 'type-is'
+import { NextApiHandler, NextApiResponse, NextApiRequest } from 'next'
+import { ExecutionRequest } from '@graphql-tools/utils'
+import { graphqlNext } from './nextApollo'
+// import { GraphQLUpload, processFileUploads } from 'graphql-upload'
 
-export type { GraphQLOptions, GraphQLExtension } from 'apollo-server-core';
+export type { GraphQLOptions } from 'apollo-server-core'
 
 type MiddlewareFn<T> = (
   req: NextApiRequest,
   res: NextApiResponse,
   cb: (val: Error | T) => void
-) => void | Promise<T>;
+) => void | Promise<T>
 
 const applyMiddleware = <T>(
   req: NextApiRequest,
@@ -36,29 +35,29 @@ const applyMiddleware = <T>(
   fn: MiddlewareFn<T>
 ): Promise<T> => {
   return new Promise((resolve, reject) => {
-    const cb = result => {
+    const cb = (result) => {
       if (result instanceof Error) {
-        return reject(result);
+        return reject(result)
       }
-      return resolve(result);
-    };
-    const result = fn(req, res, cb);
-    if (result && typeof result.then === 'function') {
-      result.then(resolve).catch(reject);
+      return resolve(result)
     }
-  });
-};
+    const result = fn(req, res, cb)
+    if (result && typeof result.then === 'function') {
+      result.then(resolve).catch(reject)
+    }
+  })
+}
 
 export interface GetRequestHandlerOptions {
   cors?:
     | corsMiddleware.CorsOptions
     | corsMiddleware.CorsOptionsDelegate
-    | boolean;
-  bodyParserConfig?: OptionsJson | boolean;
+    | boolean
+  bodyParserConfig?: OptionsJson | boolean
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onHealthCheck?: (req: NextApiRequest) => Promise<any>;
-  disableHealthCheck?: boolean;
-  baseUrl?: string;
+  onHealthCheck?: (req: NextApiRequest) => Promise<any>
+  disableHealthCheck?: boolean
+  baseUrl?: string
 }
 
 // export interface ServerRegistration extends GetRequestHandlerOptions {
@@ -71,8 +70,8 @@ export interface GetRequestHandlerOptions {
 //   app: express.Application;
 // }
 
-const createFileUploadMiddleware = (
-  uploadsConfig: FileUploadOptions,
+/* const createFileUploadMiddleware = (
+  uploadsConfig: GraphQLUpload,
   server: ApolloServerBase
 ): MiddlewareFn<void | ApolloError[]> => async (req, res) => {
   // Note: we use typeis directly instead of via req.is for connect support.
@@ -81,35 +80,34 @@ const createFileUploadMiddleware = (
     typeis(req, ['multipart/form-data'])
   ) {
     return processFileUploads(req, res, uploadsConfig)
-      .then(body => {
-        req.body = body;
+      .then((body) => {
+        req.body = body
       })
-      .catch(error => {
-        if (error.status && error.expose) res.status(error.status);
+      .catch((error) => {
+        if (error.status && error.expose) res.status(error.status)
 
         return formatApolloErrors([error], {
           formatter: server.requestOptions.formatError,
           debug: server.requestOptions.debug,
-        });
-      });
+        })
+      })
   }
-  return undefined;
-};
+  return undefined
+} */
 
 export interface NextContext {
-  req: NextApiRequest;
-  res: NextApiResponse;
-  connection?: ExecutionParams;
+  req: NextApiRequest
+  res: NextApiResponse
+  connection?: ExecutionRequest
 }
 
 export interface ApolloServerNextConfig extends Config {
-  context?: ContextFunction<NextContext, Context> | Context;
+  context?: ContextFunction<NextContext, Context> | Context
 }
 
 export class ApolloServer extends ApolloServerBase {
-  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
   constructor(config: ApolloServerNextConfig) {
-    super(config);
+    super(config)
   }
 
   // This translates the arguments from the middleware into graphQL options It
@@ -119,15 +117,15 @@ export class ApolloServer extends ApolloServerBase {
     req: NextApiRequest,
     res: NextApiResponse
   ): Promise<GraphQLOptions> {
-    return super.graphQLServerOptions({ req, res });
+    return super.graphQLServerOptions({ req, res })
   }
 
   protected supportsSubscriptions(): boolean {
-    return true;
+    return true
   }
 
   protected supportsUploads(): boolean {
-    return true;
+    return true
   }
 
   private async healthCheck(
@@ -136,18 +134,18 @@ export class ApolloServer extends ApolloServerBase {
     onHealthCheck
   ): Promise<void> {
     // Response follows https://tools.ietf.org/html/draft-inadarei-api-health-check-01
-    res.setHeader('Content-Type', 'application/health+json');
+    res.setHeader('Content-Type', 'application/health+json')
 
     if (onHealthCheck) {
       onHealthCheck(req)
         .then(() => {
-          res.json({ status: 'pass' });
+          res.json({ status: 'pass' })
         })
         .catch(() => {
-          res.status(503).json({ status: 'fail' });
-        });
+          res.status(503).json({ status: 'fail' })
+        })
     } else {
-      res.json({ status: 'pass' });
+      res.json({ status: 'pass' })
     }
   }
 
@@ -159,7 +157,7 @@ export class ApolloServer extends ApolloServerBase {
     baseUrl = '',
   }: GetRequestHandlerOptions = {}): NextApiHandler {
     return async (req, res) => {
-      const requestPath = req.url.substr(baseUrl.length);
+      const requestPath = req.url.substr(baseUrl.length)
 
       // Despite the fact that this `applyMiddleware` function is `async` in
       // other integrations (e.g. Hapi), currently it is not for Express (@here).
@@ -173,32 +171,29 @@ export class ApolloServer extends ApolloServerBase {
       // `willStart` right away, so hopefully it'll finish before the first
       // request comes in, but we won't call `next` on this middleware until it
       // does. (And we'll take care to surface any errors via the `.catch`-able.)
-      await this.willStart();
+      await this.start()
 
       if (!disableHealthCheck) {
         // router.use('/.well-known/apollo/server-health', (req, res) => {});
         if (requestPath === '/.well-known/apollo/server-health') {
-          return this.healthCheck(req, res, onHealthCheck);
+          return this.healthCheck(req, res, onHealthCheck)
         }
       }
 
-      let uploadsMiddleware: MiddlewareFn<void | ApolloError[]>;
-      if (this.uploadsConfig && typeof processFileUploads === 'function') {
-        uploadsMiddleware = createFileUploadMiddleware(
-          this.uploadsConfig,
-          this
-        );
-      }
+      let uploadsMiddleware: MiddlewareFn<void | ApolloError[]>
+      // if (this.uploadsConfig && typeof processFileUploads === 'function') {
+      //   uploadsMiddleware = createFileUploadMiddleware(this.uploadsConfig, this)
+      // }
 
       // XXX multiple paths?
-      this.graphqlPath = baseUrl;
+      this.graphqlPath = baseUrl
 
       // Note that we don't just pass all of these handlers to a single app.use call
       // for 'connect' compatibility.
       if (cors === true) {
-        await applyMiddleware(req, res, corsMiddleware());
+        await applyMiddleware(req, res, corsMiddleware())
       } else if (cors !== false) {
-        await applyMiddleware(req, res, corsMiddleware(cors));
+        await applyMiddleware(req, res, corsMiddleware(cors))
       }
 
       // @TODO: handle bodyparser config a different way for Next.js api routes
@@ -209,43 +204,43 @@ export class ApolloServer extends ApolloServerBase {
       // }
 
       if (uploadsMiddleware) {
-        await applyMiddleware(req, res, uploadsMiddleware);
+        await applyMiddleware(req, res, uploadsMiddleware)
       }
 
       // Note: if you enable playground in production and expect to be able to see your
       // schema, you'll need to manually specify `introspection: true` in the
       // ApolloServer constructor; by default, the introspection query is only
       // enabled in dev.
-      if (this.playgroundOptions && req.method === 'GET') {
+      /* if (this.playgroundOptions && req.method === 'GET') {
         // perform more expensive content-type check only if necessary
         // XXX We could potentially move this logic into the GuiOptions lambda,
         // but I don't think it needs any overriding
-        const accept = accepts(req);
-        const types = accept.types() as string[];
+        const accept = accepts(req)
+        const types = accept.types() as string[]
         const prefersHTML =
           types.find(
             (x: string) => x === 'text/html' || x === 'application/json'
-          ) === 'text/html';
+          ) === 'text/html'
 
         if (prefersHTML) {
           const playgroundRenderPageOptions: PlaygroundRenderPageOptions = {
             endpoint: req.url,
             subscriptionEndpoint: this.subscriptionsPath,
             ...this.playgroundOptions,
-          };
-          res.setHeader('Content-Type', 'text/html');
-          const playground = renderPlaygroundPage(playgroundRenderPageOptions);
-          res.write(playground);
-          res.end();
-          return undefined;
+          }
+          res.setHeader('Content-Type', 'text/html')
+          const playground = renderPlaygroundPage(playgroundRenderPageOptions)
+          res.write(playground)
+          res.end()
+          return undefined
         }
-      }
+      } */
 
       const handle = graphqlNext(() =>
         this.createGraphQLServerOptions(req, res)
-      );
+      )
 
-      return handle(req, res);
-    };
+      return handle(req, res)
+    }
   }
 }
